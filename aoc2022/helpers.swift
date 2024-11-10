@@ -586,6 +586,24 @@ public extension Character {
 		}
 		return lhs
 	}
+    
+    static func -(lhs: Character, rhs: Int) -> Character {
+        if lhs.isLetter {
+            let aVal: UInt32 = lhs.isUppercase ? 65 : 97
+            if let value = lhs.unicodeScalars.first?.value {
+                if let scalar = UnicodeScalar((value - aVal + UInt32(rhs)) % 26 + aVal) {
+                    return Character(scalar)
+                }
+            }
+        }
+        return lhs
+    }
+    
+    static func -(lhs: Character, rhs: Character) -> Int? {
+        guard let lValue = lhs.asciiValue else { return nil }
+        guard let rValue = rhs.asciiValue else { return nil }
+        return Int(lValue) - Int(rValue)
+    }
 }
 
 extension RangeReplaceableCollection {
