@@ -575,6 +575,19 @@ public extension StringProtocol {
 }
 
 public extension Character {
+    /// 1-26 for lowercase, 27-52 for uppercase | 0 for non-ascii |
+    /// base ascii value for non-letters
+    var int: Int {
+        guard let ascii = asciiValue else { return 0 }
+        if !isLetter {
+            return Int(ascii)
+        } else if isUppercase {
+            return Int(ascii) - 65 + 27
+        } else {
+            return Int(ascii) - 97 + 1
+        }
+    }
+    
 	static func +(lhs: Character, rhs: Int) -> Character {
 		if lhs.isLetter {
 			let aVal: UInt32 = lhs.isUppercase ? 65 : 97
