@@ -48,7 +48,7 @@ func printAnswer<T>(_ answer: T, test testValue: T?, real realValue: T?) where T
 
 // input functions //
 
-public func inputStrings(_ separator: String = "\n") -> [String] {
+public func inputStrings(sep separator: String = "\n") -> [String] {
 	do {
 		let home = FileManager.default.homeDirectoryForCurrentUser
 		let name = "input" + (day < 10 ? "0" : "") + "\(day)"
@@ -63,17 +63,18 @@ public func inputStrings(_ separator: String = "\n") -> [String] {
 }
 
 public func inputCharacters() -> [String] {
-    inputStrings("").map { String($0) }
+    inputStrings(sep: "").map { String($0) }
 }
 
-// use separator = "" to get digits from the full string
-public func inputInts(_ separator: String = "\n") -> [Int] {
-	let input = inputStrings(separator)
+/// use sep  = "" to get digits from the full string
+public func inputInts(sep separator: String = "\n") -> [Int] {
+    let input = inputStrings(sep: separator)
 	return input.compactMap { Int($0) ?? nil }
 }
 
-public func inputWords(_ wordSeparators: [String] = [" "], _ lineSeparator: String = "\n") -> [[String]] {
-	var words = inputStrings(lineSeparator).map { [$0] }
+/// use sep = "" to get individual characters from each line
+public func inputWords(sep wordSeparators: [String], line lineSeparator: String = "\n") -> [[String]] {
+    var words = inputStrings(sep: lineSeparator).map { [$0] }
 	for wordSeparator in wordSeparators {
 		words = words.map { line in line.flatMap { $0.components(separatedBy: wordSeparator) } }
 	}
@@ -81,15 +82,68 @@ public func inputWords(_ wordSeparators: [String] = [" "], _ lineSeparator: Stri
 	return words
 }
 
-public func inputIntWords(_ wordSeparators: [String] = [" "], _ lineSeparator: String = "\n") -> [[Int]] {
-	let input = inputWords(wordSeparators, lineSeparator)
+/// use sep = "" to get individual characters from each line
+public func inputWords(sep wordSeparator: String = " ", line lineSeparator: String = "\n") -> [[String]] {
+    inputWords(sep: [wordSeparator], line: lineSeparator)
+}
+
+/// sep1 splits into words, sep2 splits into sub words
+public func inputSubWords(sep1 wordSeparators: [String], sep2 subWordSeparators: [String], line lineSeparator: String = "\n") -> [[[String]]] {
+    var subWords = inputWords(sep: wordSeparators, line: lineSeparator).map { $0.map { [$0] } }
+    // subWords now looks like [[["a-a", "b-b"]], [["c-c", "d-d"]]]
+    for subWordSeparator in subWordSeparators {
+        subWords = subWords.map { line in line.map { word in word.flatMap { $0.components(separatedBy: subWordSeparator) } } }
+    }
+    return subWords
+}
+
+
+/// sep1 splits into words, sep2 splits into sub words
+public func inputSubWords(sep1 wordSeparator: String, sep2 subWordSeparator: String, line lineSeparator: String = "\n") -> [[[String]]] {
+    return inputSubWords(sep1: [wordSeparator], sep2: [subWordSeparator])
+}
+
+public func inputOneInt(which word: Int, sep wordSeparators: [String], line lineSeparator: String = "\n") -> [Int] {
+    let input = inputWords(sep: wordSeparators, line: lineSeparator)
+    return input.map { line in Int(line[word])! }
+}
+
+public func inputOneInt(which word: Int, sep wordSeparator: String = " ", line lineSeparator: String = "\n") -> [Int] {
+    return inputOneInt(which: word, sep: [wordSeparator], line: lineSeparator)
+}
+
+/// use sep = "" to get digits from each line; using compactMap so invalid ints are fine
+public func inputIntWords(sep wordSeparators: [String], line lineSeparator: String = "\n") -> [[Int]] {
+    let input = inputWords(sep: wordSeparators, line: lineSeparator)
 	return input.map { words in words.compactMap { word in Int(word) } }
 }
 
-public func inputSomeInts(words: [Int], _ wordSeparators: [String] = [" "], _ lineSeparator: String = "\n") -> [[Int]] {
-	let input = inputWords(wordSeparators, lineSeparator)
+/// use sep = "" to get digits from each line; using compactMap so invalid ints are fine
+public func inputIntWords(sep wordSeparator: String = " ", line lineSeparator: String = "\n") -> [[Int]] {
+    return inputIntWords(sep: [wordSeparator], line: lineSeparator)
+}
+
+/// using compactMap so invalid ints are fine
+public func inputIntSubWords(sep1 wordSeparators: [String], sep2 subWordSeparators: [String], line lineSeparator: String = "\n") -> [[[Int]]] {
+    let input = inputSubWords(sep1: wordSeparators, sep2: subWordSeparators, line: lineSeparator)
+    return input.map { line in line.map { word in word.compactMap { subWord in Int(subWord) } } }
+}
+
+
+/// using compactMap so invalid ints are fine
+public func inputIntSubWords(sep1 wordSeparator: String, sep2 subWordSeparator: String, line lineSeparator: String = "\n") -> [[[Int]]] {
+    return inputIntSubWords(sep1: [wordSeparator], sep2: [subWordSeparator], line: lineSeparator)
+}
+
+public func inputSomeIntsPerLine(which words: [Int], sep wordSeparators: [String], line lineSeparator: String = "\n") -> [[Int]] {
+    let input = inputWords(sep: wordSeparators, line: lineSeparator)
 	return words.map { word in input.map { line in Int(line[word])! } }
 }
+
+public func inputSomeIntsPerLine(which words: [Int], sep wordSeparator: String = " ", line lineSeparator: String = "\n") -> [[Int]] {
+    return inputSomeIntsPerLine(which: words, sep: [wordSeparator], line: lineSeparator)
+}
+
 
 //public func inputAllInts() -> [[Int]] {
 //	let input = inputStrings()
@@ -110,10 +164,7 @@ public func inputSomeInts(words: [Int], _ wordSeparators: [String] = [" "], _ li
 //	return output
 //}
 
-public func inputOneInt(word: Int, _ wordSeparators: [String] = [" "], _ lineSeparator: String = "\n") -> [Int] {
-	let input = inputWords(wordSeparators, lineSeparator)
-	return input.map { line in Int(line[word])! }
-}
+
 
 // shortcuts //
 
@@ -292,6 +343,15 @@ public extension Collection where Element: AdditiveArithmetic {
 	}
 }
 
+public extension Collection where Element: Comparable {
+    func makeClosedRange() -> ClosedRange<Element>? {
+        if self.isEmpty { return nil }
+        guard let low = self.min() else { return nil }
+        guard let high = self.max() else { return nil }
+        return low...high
+    }
+}
+
 public extension Array {
 	subscript(w i: Int) -> Iterator.Element? {
 		return self[index(startIndex, offsetBy: i % count)]
@@ -402,6 +462,12 @@ public extension Array<String> {
     
     func pointsGrid() -> [[C2]] {
         (0..<self.count).map { y in (0..<self[y].count).map { x in C2(x, y) } }
+    }
+}
+
+public extension ClosedRange {
+    func contains(_ other: ClosedRange<Bound>) -> Bool {
+        return self.lowerBound <= other.lowerBound && self.upperBound >= other.upperBound
     }
 }
 
@@ -1123,7 +1189,7 @@ class IntcodeComputer: CustomStringConvertible {
 	var input: [Int]
 	var output: [Int] = []
 	
-	init(program: [Int] = inputInts(","), input: [Int] = []) {
+    init(program: [Int] = inputInts(sep: ","), input: [Int] = []) {
 		for (i, v) in program.enumerated() {
 			code[i] = v
 		}

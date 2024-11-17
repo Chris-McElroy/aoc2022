@@ -10,7 +10,7 @@ import Foundation
 
 func d1() {
     runType = .all
-    let input = inputWords(["\n"], "\n\n")
+    let input = inputWords(sep: ["\n"], line: "\n\n")
     var a1 = 0
     var a2 = 0
     
