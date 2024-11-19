@@ -54,7 +54,7 @@ public func inputStrings(sep separator: String = "\n", lineRange: ClosedRange<In
 		let name = "input" + (day < 10 ? "0" : "") + "\(day)"
         let filePath = projectFolder + "/aoc2022/" + ((runNumber == 1 && runType != .real) ? "testInput" : name)
 		let file = URL(fileURLWithPath: filePath, relativeTo: home)
-        let list = try String(contentsOf: file, encoding: .ascii).dropLast().components(separatedBy: separator)
+        let list = try String(contentsOf: file, encoding: .ascii).dropLast().split(separator: separator).map { String($0) }
         if let lineRange {
             return Array(list.dropFirst(max(lineRange.lowerBound - 1, 0)).dropLast(max((list.count - lineRange.upperBound), 0)))
         }
@@ -79,7 +79,7 @@ public func inputInts(sep separator: String = "\n", lineRange: ClosedRange<Int>?
 public func inputWords(sep wordSeparators: [String], line lineSeparator: String = "\n", lineRange: ClosedRange<Int>? = nil) -> [[String]] {
     var words = inputStrings(sep: lineSeparator, lineRange: lineRange).map { [$0] }
 	for wordSeparator in wordSeparators {
-		words = words.map { line in line.flatMap { $0.components(separatedBy: wordSeparator) } }
+        words = words.map { line in line.flatMap { $0.split(separator: wordSeparator).map { String($0) } } }
 	}
 	words = words.map { line in line.filter { $0 != "" } }
 	return words
@@ -95,7 +95,7 @@ public func inputSubWords(sep1 wordSeparators: [String], sep2 subWordSeparators:
     var subWords = inputWords(sep: wordSeparators, line: lineSeparator, lineRange: lineRange).map { $0.map { [$0] } }
     // subWords now looks like [[["a-a", "b-b"]], [["c-c", "d-d"]]]
     for subWordSeparator in subWordSeparators {
-        subWords = subWords.map { line in line.map { word in word.flatMap { $0.components(separatedBy: subWordSeparator) } } }
+        subWords = subWords.map { line in line.map { word in word.flatMap { $0.split(separator: subWordSeparator).map { String($0) } } } }
     }
     return subWords
 }
@@ -304,6 +304,10 @@ public extension Collection where Element: Equatable {
 	func repeats(of e: Element) -> Int {
 		return self.filter({ $0 == e }).count
 	}
+    
+    func allUnique() -> Bool {
+        return self.allSatisfy { self.repeats(of: $0) == 1 }
+    }
 }
 
 public extension Collection where Element: Hashable {
