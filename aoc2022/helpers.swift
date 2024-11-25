@@ -444,7 +444,7 @@ public extension Array where Element: Equatable {
 	}
 }
 
-public extension Array<Array<Any>> {
+public extension Array where Element: RangeReplaceableCollection, Element.Index == Int {
     subscript(_ p: C2) -> Element.Element {
         self[p.y][p.x]
     }
@@ -470,6 +470,20 @@ public extension Array<Array<Any>> {
         }
         
         return t
+    }
+}
+
+public extension Array where Element: RangeReplaceableCollection, Element.Index == Int, Element.Element: RangeReplaceableCollection, Element.Element.Index == Int {
+    subscript(_ p: C3) -> Element.Element.Element {
+        self[p.z][p.y][p.x]
+    }
+    
+    func points() -> [C3] {
+        (0..<self.count).flatMap { z in (0..<self[z].count).flatMap { y in (0..<self[y].count).map { x in C3(x, y, z) } } }
+    }
+    
+    func pointsGrid() -> [[[C3]]] {
+        (0..<self.count).map { z in (0..<self[z].count).map { y in (0..<self[y].count).map { x in C3(x, y, z) } } }
     }
 }
 
@@ -866,12 +880,13 @@ public struct C2: Equatable, Hashable, AdditiveArithmetic, Comparable {
 		}
 	}
 	
-	static let zeroAdjacents = [(-1,0),(0,-1),(0,1),(1,0)]
-	static let zeroNeighbors = [(-1,-1),(-1,0),(-1,1),(0,-1),(0,1),(1,-1),(1,0),(1,1)]
-	var adjacents: [C2] { C2.zeroAdjacents.map({ C2(x + $0.0, y + $0.1) }) }
-	var neighbors: [C2] { C2.zeroNeighbors.map({ C2(x + $0.0, y + $0.1) }) }
-	var adjacentsWithSelf: [C2] { C2.zeroAdjacents.map({ C2(x + $0.0, y + $0.1) }) + [self] }
-	var neighborsWithSelf: [C2] { C2.zeroNeighbors.map({ C2(x + $0.0, y + $0.1) }) + [self] }
+    static let zeroAdjacents: [C2] = [C2(-1,0),  C2(0,-1), C2(0,1),  C2(1,0)]
+    static let zeroNeighbors: [C2] = [C2(-1,-1), C2(-1,0), C2(-1,1), C2(0,-1),
+                                      C2(0,1),   C2(1,-1), C2(1,0),  C2(1,1)]
+	var adjacents: [C2] { C2.zeroAdjacents.map({ self + $0 }) }
+    var neighbors: [C2] { C2.zeroNeighbors.map({ self + $0 }) }
+    var adjacentsAndSelf: [C2] { adjacents + [self] }
+    var neighborsAndSelf: [C2] { neighbors + [self] }
 	
     public static var zero: C2 = C2(0, 0)
 	
@@ -894,12 +909,20 @@ public struct C2: Equatable, Hashable, AdditiveArithmetic, Comparable {
 	func manhattanDistance() -> Int {
 		abs(x) + abs(y)
 	}
-	
+    
+    func manhattanDistance(to p: C2) -> Int {
+        (p - self).manhattanDistance()
+    }
+    
+    func crowDistance(to p: C2) -> Double {
+        (p - self).vectorLength()
+    }
+    
 	func vectorLength() -> Double {
 		sqrt(Double(x*x + y*y))
 	}
     
-    func inBounds(of array: any Collection<any Collection<Any>>) -> Bool {
+    func inBounds<T>(of array: any Collection<Array<T>>) -> Bool {
         x.isin(0..<(array.first?.count ?? 1)) && y.isin(0..<array.count)
     }
     
@@ -907,7 +930,7 @@ public struct C2: Equatable, Hashable, AdditiveArithmetic, Comparable {
         x.isin(0..<(array.first?.count ?? 1)) && y.isin(0..<array.count)
     }
     
-    func endOfLine(of array: Array<any Collection<Any>>) -> Bool {
+    func endOfLine<T>(of array: Array<Array<T>>) -> Bool {
         x == array[y].count - 1
     }
     
@@ -915,7 +938,57 @@ public struct C2: Equatable, Hashable, AdditiveArithmetic, Comparable {
         x == array[y].count - 1
     }
     
-    func adjacentsInBounds(of array: any Collection<any Collection<Any>>) -> [C2] {
+    /// returns the closest to a line of adjacents connecting the two points
+    static func ...(lhs: C2, rhs: C2) -> [C2] {
+        return (lhs..<rhs) + [rhs]
+    }
+    
+    /// returns the closest to a line of adjacents from lhs to an adjacent of rhs
+    static func ..<(lhs: C2, rhs: C2) -> [C2] {
+        var line: [C2] = [lhs]
+        var current: C2 = lhs
+        
+        while lhs != rhs {
+            current = current.adjacents.min(by: { $0.crowDistance(to: rhs) < $1.crowDistance(to: rhs) })!
+            line.append(current)
+        }
+        
+        return line
+    }
+    
+    func toOutOfBounds<T>(of array: Array<Array<T>>, by dir: C2) -> [C2] {
+        var line: [C2] = []
+        var current: C2 = self + dir
+        
+        while current.inBounds(of: array) {
+            line.append(current)
+            current += dir
+        }
+        
+        return line
+    }
+    
+    func toOutOfBounds(of array: Array<String>, by dir: C2) -> [C2] {
+        var line: [C2] = []
+        var current: C2 = self + dir
+        
+        while current.inBounds(of: array) {
+            line.append(current)
+            current += dir
+        }
+        
+        return line
+    }
+    
+    func selfToOutOfBounds<T>(of array: Array<Array<T>>, by dir: C2) -> [C2] {
+        [self] + toOutOfBounds(of: array, by: dir)
+    }
+    
+    func selfToOutOfBounds(of array: Array<String>, by dir: C2) -> [C2] {
+        [self] + toOutOfBounds(of: array, by: dir)
+    }
+    
+    func adjacentsInBounds<T>(of array: any Collection<Array<T>>) -> [C2] {
         adjacents.filter { $0.inBounds(of: array) }
     }
     
@@ -923,7 +996,7 @@ public struct C2: Equatable, Hashable, AdditiveArithmetic, Comparable {
         adjacents.filter { $0.inBounds(of: array) }
     }
     
-    func neighborsInBounds(of array: any Collection<any Collection<Any>>) -> [C2] {
+    func neighborsInBounds<T>(of array: any Collection<Array<T>>) -> [C2] {
         neighbors.filter { $0.inBounds(of: array) }
     }
     
@@ -955,20 +1028,28 @@ public struct C3: Equatable, Hashable, AdditiveArithmetic {
 		self.z = z
 	}
 	
-	static let zeroAdjacents = [(-1,0,0),(0,-1,0),(0,0,-1),(0,0,1),(0,1,0),(1,0,0)]
-	static let zeroNeighbors = [(-1,-1,-1),(-1,-1,0),(-1,-1,1),(-1,0,-1),(-1,0,0),(-1,0,1),(-1,1,-1),(-1,1,0),(-1,1,1),
-								(0,-1,-1),(0,-1,0),(0,-1,1),(0,0,-1),(0,0,1),(0,1,-1),(0,1,0),(0,1,1),
-								(1,-1,-1),(1,-1,0),(1,-1,1),(1,0,-1),(1,0,0),(1,0,1),(1,1,-1),(1,1,0),(1,1,1)]
-	var adjacents: [C3] { C3.zeroAdjacents.map({ C3(x + $0.0, y + $0.1, z + $0.2) }) }
-	var neighbors: [C3] { C3.zeroNeighbors.map({ C3(x + $0.0, y + $0.1, z + $0.2) }) }
-	var adjacentsWithSelf: [C3] { C3.zeroAdjacents.map({ C3(x + $0.0, y + $0.1, z + $0.2) }) + [self] }
-	var neighborsWithSelf: [C3] { C3.zeroNeighbors.map({ C3(x + $0.0, y + $0.1, z + $0.2) }) + [self] }
+	static let zeroAdjacents = [C3(-1,0,0),C3(0,-1,0),C3(0,0,-1),C3(0,0,1),C3(0,1,0),C3(1,0,0)]
+	static let zeroNeighbors = [C3(-1,-1,-1),C3(-1,-1,0),C3(-1,-1,1),C3(-1,0,-1),C3(-1,0,0),C3(-1,0,1),C3(-1,1,-1),C3(-1,1,0),C3(-1,1,1),
+                                C3(0,-1,-1),C3(0,-1,0),C3(0,-1,1),C3(0,0,-1),C3(0,0,1),C3(0,1,-1),C3(0,1,0),C3(0,1,1),
+                                C3(1,-1,-1),C3(1,-1,0),C3(1,-1,1),C3(1,0,-1),C3(1,0,0),C3(1,0,1),C3(1,1,-1),C3(1,1,0),C3(1,1,1)]
+    var adjacents: [C3] { C3.zeroAdjacents.map({ self + $0 }) }
+	var neighbors: [C3] { C3.zeroNeighbors.map({ self + $0 }) }
+    var adjacentsAndSelf: [C3] { adjacents + [self] }
+	var neighborsAndSelf: [C3] { neighbors + [self] }
 	
     public static var zero: C3 = C3(0, 0, 0)
 	
 	func manhattanDistance() -> Int {
 		abs(x) + abs(y) + abs(z)
 	}
+    
+    func manhattanDistance(to p: C3) -> Int {
+        (p - self).manhattanDistance()
+    }
+    
+    func crowDistance(to p: C3) -> Double {
+        (p - self).vectorLength()
+    }
 	
 	func vectorLength() -> Double {
 		sqrt(Double(x*x + y*y + z*z))
@@ -981,6 +1062,46 @@ public struct C3: Equatable, Hashable, AdditiveArithmetic {
 	public static func - (lhs: C3, rhs: C3) -> C3 {
 		C3(lhs.x - rhs.x, lhs.y - rhs.y, lhs.z - rhs.z)
 	}
+    
+    func inBounds<T>(of array: any Collection<Array<Array<T>>>) -> Bool {
+        x.isin(0..<(array.first?.first?.count ?? 1)) &&
+        y.isin(0..<(array.first?.count ?? 1)) &&
+        z.isin(0..<array.count)
+    }
+    
+    /// returns the closest to a line of adjacents connecting the two points
+    static func ...(lhs: C3, rhs: C3) -> [C3] {
+        return (lhs..<rhs) + [rhs]
+    }
+    
+    /// returns the closest to a line of adjacents from lhs to an adjacent of rhs
+    static func ..<(lhs: C3, rhs: C3) -> [C3] {
+        var line: [C3] = [lhs]
+        var current: C3 = lhs
+        
+        while lhs != rhs {
+            current = current.adjacents.min(by: { $0.crowDistance(to: rhs) < $1.crowDistance(to: rhs) })!
+            line.append(current)
+        }
+        
+        return line
+    }
+    
+    func toOutOfBounds<T>(of array: Array<Array<Array<T>>>, by dir: C3) -> [C3] {
+        var line: [C3] = []
+        var current: C3 = self + dir
+        
+        while current.inBounds(of: array) {
+            line.append(current)
+            current += dir
+        }
+        
+        return line
+    }
+    
+    func selfToOutOfBounds<T>(of array: Array<Array<Array<T>>>, by dir: C3) -> [C3] {
+        [self] + toOutOfBounds(of: array, by: dir)
+    }
 }
 
 func MD5(of string: String) -> String {
