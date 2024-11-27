@@ -1285,6 +1285,10 @@ extension Int {
             return nil
         }
     }
+    
+    func times(_ block: () -> Void) {
+        (0..<self).forEach { _ in block() }
+    }
 }
 
 enum Operation {
