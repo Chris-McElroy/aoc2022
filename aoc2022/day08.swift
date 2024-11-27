@@ -8,12 +8,10 @@
 import Foundation
 
 func d8() {
-    runType = .all
+    runType = .real
     let input = inputIntWords(sep: "")
     var a1 = 0
     var a2 = 0
-    
-    var visSet: Set<C2> = []
     
     for p in input.points() {
         let h = input[p]
@@ -31,13 +29,13 @@ func d8() {
             }
             
             score *= lineEnd.manhattanDistance(to: p)
-            if vis { visSet.insert(p) }
+            if vis { store(p) }
         }
         
         a2 = max(a2, score)
     }
     
-    a1 = visSet.count
+    a1 = c2Memory[0].count
 
     printAnswer(a1, test: 21, real: 1711)
     printAnswer(a2, test : 8, real: 301392)

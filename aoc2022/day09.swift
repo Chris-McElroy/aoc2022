@@ -13,8 +13,6 @@ func d9() {
     var a1 = 0
     var a2 = 0
     
-    var visited1: Set<C2> = []
-    var visited2: Set<C2> = []
     var rope1: [C2] = Array(repeating: .zero, count: 2)
     var rope2: [C2] = Array(repeating: .zero, count: 10)
     
@@ -26,8 +24,8 @@ func d9() {
             rope2[0] += dir
             stepKnots(for: &rope1)
             stepKnots(for: &rope2)
-            visited1.insert(rope1.last!)
-            visited2.insert(rope2.last!)
+            store(rope1.last!, 1)
+            store(rope2.last!, 2)
         }
     }
     
@@ -41,8 +39,8 @@ func d9() {
         }
     }
     
-    a1 = visited1.count
-    a2 = visited2.count
+    a1 = c2Memory[1].count
+    a2 = c2Memory[2].count
     printAnswer(a1, test: 13, real: 6498)
     printAnswer(a2, test: 1, real: 2531)
 //    copy(a1)

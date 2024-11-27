@@ -35,6 +35,7 @@ func run() {
     functions[day - 1]()
     let end = Date().timeIntervalSinceReferenceDate
     print("in:", end-start)
+    clearMemory()
 }
 
 
@@ -1117,6 +1118,41 @@ public struct C3: Equatable, Hashable, AdditiveArithmetic {
     func clamped(to range: ClosedRange<Int>) -> C3 {
         return C3(self.x.clamped(to: range), self.y.clamped(to: range), self.z.clamped(to: range))
     }
+}
+
+var memoryLimit: Int = 100
+
+var intMemory: [Set<Int>] = Array(repeating: Set<Int>(), count: memoryLimit)
+var doubleMemory: [Set<Double>] = Array(repeating: Set<Double>(), count: memoryLimit)
+var stringMemory: [Set<String>] = Array(repeating: Set<String>(), count: memoryLimit)
+var characterMemory: [Set<Character>] = Array(repeating: Set<Character>(), count: memoryLimit)
+var c2Memory: [Set<C2>] = Array(repeating: Set<C2>(), count: memoryLimit)
+var c3Memory: [Set<C3>] = Array(repeating: Set<C3>(), count: memoryLimit)
+
+func store<T>(_ item: T, _ slot: Int = 0) {
+    if T.self == Int.self {
+        intMemory[slot].insert(item as! Int)
+    } else if T.self == Double.self {
+        doubleMemory[slot].insert(item as! Double)
+    } else if T.self == String.self {
+        stringMemory[slot].insert(item as! String)
+    } else if T.self == Character.self {
+        characterMemory[slot].insert(item as! Character)
+    } else if T.self == C2.self {
+        c2Memory[slot].insert(item as! C2)
+    } else if T.self == C3.self {
+        c3Memory[slot].insert(item as! C3)
+    }
+}
+
+func clearMemory(limit: Int = memoryLimit) {
+    memoryLimit = limit
+    intMemory = Array(repeating: Set<Int>(), count: memoryLimit)
+    doubleMemory = Array(repeating: Set<Double>(), count: memoryLimit)
+    stringMemory = Array(repeating: Set<String>(), count: memoryLimit)
+    characterMemory = Array(repeating: Set<Character>(), count: memoryLimit)
+    c2Memory = Array(repeating: Set<C2>(), count: memoryLimit)
+    c3Memory = Array(repeating: Set<C3>(), count: memoryLimit)
 }
 
 func MD5(of string: String) -> String {
