@@ -20,7 +20,7 @@ func d9() {
     
     for move in input {
         let len = Int(move[1])!
-        let dir = C2.init(dir: move[0][0])
+        let dir = C2(dir: move[0][0])
         len.times {
             rope1[0] += dir
             rope2[0] += dir
@@ -36,12 +36,7 @@ func d9() {
             let head = rope[i-1]
             let tail = rope[i]
             if head.crowDistance(to: tail) >= 2 {
-                if head.x != tail.x {
-                    rope[i].x += (head.x > tail.x) ? 1 : -1
-                }
-                if head.y != tail.y {
-                    rope[i].y += (head.y > tail.y) ? 1 : -1
-                }
+                rope[i] += (head - tail).clamped(to: -1...1)
             }
         }
     }

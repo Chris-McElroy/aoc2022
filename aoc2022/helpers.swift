@@ -132,7 +132,6 @@ public func inputIntSubWords(sep1 wordSeparators: [String], sep2 subWordSeparato
     return input.map { line in line.map { word in word.compactMap { subWord in Int(subWord) } } }
 }
 
-
 /// using compactMap so invalid ints are fine
 public func inputIntSubWords(sep1 wordSeparator: String, sep2 subWordSeparator: String, line lineSeparator: String = "\n", lineRange: ClosedRange<Int>? = nil) -> [[[Int]]] {
     return inputIntSubWords(sep1: [wordSeparator], sep2: [subWordSeparator], line: lineSeparator, lineRange: lineRange)
@@ -1015,6 +1014,14 @@ public struct C2: Equatable, Hashable, AdditiveArithmetic, Comparable {
     public static func < (lhs: C2, rhs: C2) -> Bool {
         (lhs.y > rhs.y) || (lhs.y == rhs.y && lhs.x > rhs.x)
     }
+    
+    func clamped(x: ClosedRange<Int>, y: ClosedRange<Int>) -> C2 {
+        return C2(self.x.clamped(to: x), self.y.clamped(to: y))
+    }
+    
+    func clamped(to range: ClosedRange<Int>) -> C2 {
+        return C2(self.x.clamped(to: range), self.y.clamped(to: range))
+    }
 }
 
 public struct C3: Equatable, Hashable, AdditiveArithmetic {
@@ -1101,6 +1108,14 @@ public struct C3: Equatable, Hashable, AdditiveArithmetic {
     
     func selfToOutOfBounds<T>(of array: Array<Array<Array<T>>>, by dir: C3) -> [C3] {
         [self] + toOutOfBounds(of: array, by: dir)
+    }
+    
+    func clamped(x: ClosedRange<Int>, y: ClosedRange<Int>, z: ClosedRange<Int>) -> C3 {
+        return C3(self.x.clamped(to: x), self.y.clamped(to: y), self.z.clamped(to: z))
+    }
+    
+    func clamped(to range: ClosedRange<Int>) -> C3 {
+        return C3(self.x.clamped(to: range), self.y.clamped(to: range), self.z.clamped(to: range))
     }
 }
 
@@ -1288,6 +1303,16 @@ extension Int {
     
     func times(_ block: () -> Void) {
         (0..<self).forEach { _ in block() }
+    }
+    
+    func clamped(to range: ClosedRange<Int>) -> Int {
+        if self > range.upperBound {
+            return range.upperBound
+        } else if self < range.lowerBound {
+            return range.lowerBound
+        } else {
+            return self
+        }
     }
 }
 
